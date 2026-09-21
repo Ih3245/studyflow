@@ -76,7 +76,7 @@ export default function Home() {
             <Notes notes={data.notes} onAdd={addNote} onUpdate={updateNote} onDelete={deleteNote} />
           )}
           {active === "timetable" && (
-            <Timetable slots={data.timetable} onAdd={addClass} onDelete={deleteClass} />
+            <Timetable slots={data.timetable} onAdd={addClass} onDelete={deleteClass} onUpdate={updateClass} />
           )}
           {active === "gpa" && (
             <GPA courses={data.courses} onAdd={addCourse} onDelete={deleteCourse} onUpdate={updateCourse} />
