@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-// Autumn leaf SVG shapes
 const LEAF_SHAPES = [
   "M10,0 Q20,5 15,15 Q10,25 5,15 Q0,5 10,0Z",
   "M8,0 Q18,8 12,18 Q6,28 0,18 Q-2,8 8,0Z",
@@ -44,6 +43,8 @@ function generateLeaves(count: number): Leaf[] {
   }));
 }
 
+const leaves = generateLeaves(35);
+
 function FallingLeaf({ leaf }: { leaf: Leaf }) {
   return (
     <div
@@ -57,69 +58,41 @@ function FallingLeaf({ leaf }: { leaf: Leaf }) {
         "--rot-end": `${leaf.rotation + 360}deg`,
       } as React.CSSProperties}
     >
-      <svg
-        width={leaf.size}
-        height={leaf.size}
-        viewBox="0 0 25 28"
-        fill={leaf.color}
-        style={{ filter: `drop-shadow(0 2px 4px ${leaf.color}66)` }}
-      >
+      <svg width={leaf.size} height={leaf.size} viewBox="0 0 25 28" fill={leaf.color}>
         <path d={leaf.shape} />
-        <line
-          x1="10" y1="0" x2="10" y2="28"
-          stroke={leaf.color}
-          strokeWidth="0.8"
-          opacity="0.5"
-        />
+        <line x1="10" y1="0" x2="10" y2="28" stroke={leaf.color} strokeWidth="0.8" opacity="0.5" />
       </svg>
     </div>
   );
 }
 
-interface FormState {
-  email: string;
-  password: string;
-  name: string;
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
-  const [form, setForm] = useState<FormState>({ email: "", password: "", name: "" });
+  const [form, setForm] = useState({ email: "", password: "", name: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [leaves] = useState(() => generateLeaves(35));
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  // 3D tilt effect on mouse move
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = (e.clientX - cx) / (rect.width / 2);
-    const dy = (e.clientY - cy) / (rect.height / 2);
-    setTilt({ x: dy * -12, y: dx * 12 });
+    const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+    const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+    setTilt({ x: dy * -10, y: dx * 10 });
   };
 
   const handleMouseLeave = () => setTilt({ x: 0, y: 0 });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    setError("");
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
     const body = isRegister
       ? { email: form.email, password: form.password, name: form.name }
       : { email: form.email, password: form.password };
-
     try {
       const res = await fetch(endpoint, {
         method: "POST",
@@ -127,14 +100,10 @@ export default function LoginPage() {
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok) {
-        setError(json.error || "কিছু একটা হয়েছে। আবার চেষ্টা করুন।");
-      } else {
-        router.push("/");
-        router.refresh();
-      }
+      if (!res.ok) setError(json.error || "Something went wrong. Please try again.");
+      else { router.push("/"); router.refresh(); }
     } catch {
-      setError("Network error. Connection check করুন।");
+      setError("Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -142,54 +111,40 @@ export default function LoginPage() {
 
   return (
     <div className="autumn-bg">
-      {/* Animated sky gradient overlay */}
       <div className="autumn-sky" />
-
-      {/* Falling leaves */}
       <div className="leaves-container" aria-hidden="true">
-        {leaves.map((leaf) => (
-          <FallingLeaf key={leaf.id} leaf={leaf} />
-        ))}
+        {leaves.map((leaf) => <FallingLeaf key={leaf.id} leaf={leaf} />)}
       </div>
-
-      {/* Ground mist */}
       <div className="ground-mist" />
 
-      {/* Main card */}
       <div className="login-scene" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
         <div
           ref={cardRef}
           className="login-card"
-          style={{
-            transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-          }}
+          style={{ transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}
         >
-          {/* Glowing orbs inside card */}
           <div className="card-orb card-orb-1" />
           <div className="card-orb card-orb-2" />
 
-          {/* Header */}
           <div className="card-header">
-            <div className="logo-icon">🍁</div>
+            <div className="logo-mark">SF</div>
             <h1 className="app-title">StudyFlow</h1>
             <p className="app-subtitle">
-              {isRegister ? "নতুন account তৈরি করুন" : "আপনার account-এ প্রবেশ করুন"}
+              {isRegister ? "Create your student account" : "Sign in to your account"}
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="auth-form">
             {isRegister && (
               <div className="field-group">
-                <label className="field-label">আপনার নাম</label>
+                <label className="field-label">Full Name</label>
                 <div className="field-wrapper">
-                  <span className="field-icon">👤</span>
                   <input
                     type="text"
                     name="name"
-                    placeholder="Full Name"
+                    placeholder="Your name"
                     value={form.name}
-                    onChange={handleChange}
+                    onChange={(e) => { setForm(f => ({ ...f, name: e.target.value })); setError(""); }}
                     className="auth-input"
                     autoComplete="name"
                   />
@@ -200,13 +155,12 @@ export default function LoginPage() {
             <div className="field-group">
               <label className="field-label">Email Address</label>
               <div className="field-wrapper">
-                <span className="field-icon">✉️</span>
                 <input
                   type="email"
                   name="email"
                   placeholder="student@example.com"
                   value={form.email}
-                  onChange={handleChange}
+                  onChange={(e) => { setForm(f => ({ ...f, email: e.target.value })); setError(""); }}
                   className="auth-input"
                   required
                   autoComplete="email"
@@ -217,13 +171,12 @@ export default function LoginPage() {
             <div className="field-group">
               <label className="field-label">Password</label>
               <div className="field-wrapper">
-                <span className="field-icon">🔐</span>
                 <input
                   type="password"
                   name="password"
-                  placeholder="••••••••"
+                  placeholder="Minimum 6 characters"
                   value={form.password}
-                  onChange={handleChange}
+                  onChange={(e) => { setForm(f => ({ ...f, password: e.target.value })); setError(""); }}
                   className="auth-input"
                   required
                   autoComplete={isRegister ? "new-password" : "current-password"}
@@ -232,49 +185,33 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="error-box">
-                <span>⚠️</span> {error}
-              </div>
-            )}
+            {error && <div className="error-box">{error}</div>}
 
             <button type="submit" className="auth-btn" disabled={loading}>
               {loading ? (
                 <span className="btn-loading">
                   <span className="spinner" />
-                  {isRegister ? "তৈরি হচ্ছে..." : "প্রবেশ হচ্ছে..."}
+                  {isRegister ? "Creating account..." : "Signing in..."}
                 </span>
-              ) : (
-                <>
-                  {isRegister ? "🍂 Account তৈরি করুন" : "🍁 প্রবেশ করুন"}
-                </>
-              )}
+              ) : isRegister ? "Create Account" : "Sign In"}
             </button>
           </form>
 
-          {/* Toggle */}
           <div className="toggle-section">
             <span className="toggle-text">
-              {isRegister ? "আগেই account আছে?" : "নতুন student?"}
+              {isRegister ? "Already have an account?" : "New student?"}
             </span>
             <button
               type="button"
               className="toggle-btn"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setError("");
-                setForm({ email: "", password: "", name: "" });
-              }}
+              onClick={() => { setIsRegister(!isRegister); setError(""); setForm({ email: "", password: "", name: "" }); }}
             >
-              {isRegister ? "Login করুন →" : "Register করুন →"}
+              {isRegister ? "Sign In" : "Create Account"}
             </button>
           </div>
 
-          {/* Decorative footer */}
           <div className="card-footer">
-            <span>🍂</span>
-            <span className="footer-text">Your data is safe & secure</span>
-            <span>🍂</span>
+            <span className="footer-text">Your data is safe and encrypted</span>
           </div>
         </div>
       </div>
