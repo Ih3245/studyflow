@@ -1,0 +1,32 @@
+// Prisma schema for Neon Postgres
+// After connecting Neon, run: npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userData  UserData?
+}
+
+// Stores the full app data as JSON blob per user (simple & efficient for free tier)
+model UserData {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data        Json     @default("{}")
+  updatedAt   DateTime @updatedAt
+}
